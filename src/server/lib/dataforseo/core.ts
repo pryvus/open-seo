@@ -244,9 +244,8 @@ async function requestDataforseo<TTask extends DataforseoTaskLike>(
     const bytes = new Uint8Array(await response.arrayBuffer());
     // Some standalone runtimes pass gzip through; other runtimes decode it.
     // Check the body signature so an already-decoded response stays untouched.
-    const decoded = bytes[0] === 0x1f && bytes[1] === 0x8b
-      ? gunzipSync(bytes)
-      : bytes;
+    const decoded =
+      bytes[0] === 0x1f && bytes[1] === 0x8b ? gunzipSync(bytes) : bytes;
     text = new TextDecoder().decode(decoded);
   } catch (error) {
     throw asDataforseoTimeoutError(error, url);
