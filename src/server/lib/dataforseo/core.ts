@@ -1,3 +1,4 @@
+import { gunzipSync } from "node:zlib";
 import { gatewayRefusal } from "@every-app/sdk/server";
 import { AppError } from "@/server/lib/errors";
 import type { ErrorCode } from "@/shared/error-codes";
@@ -240,7 +241,13 @@ async function requestDataforseo<TTask extends DataforseoTaskLike>(
   // in time and still run out the clock while the body streams in.
   let text: string;
   try {
-    text = await response.text();
+    const bytes = new Uint8Array(await response.arrayBuffer());
+    // Some standalone runtimes pass gzip through; other runtimes decode it.
+    // Check the body signature so an already-decoded response stays untouched.
+    const decoded = bytes[0] === 0x1f && bytes[1] === 0x8b
+      ? gunzipSync(bytes)
+      : bytes;
+    text = new TextDecoder().decode(decoded);
   } catch (error) {
     throw asDataforseoTimeoutError(error, url);
   }
